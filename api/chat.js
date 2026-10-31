@@ -92,7 +92,12 @@ module.exports = async function handler(req, res) {
       })
     });
 
-    if (!upstream.ok) return res.status(502).json({ error: 'Falha ao consultar o assistente.' });
+    if (!upstream.ok) {
+      // Registra só o código e o começo da mensagem de erro da Groq (sem dados do usuário), para diagnóstico nos logs da Vercel.
+      const detail = await upstream.text().catch(() => '');
+      console.error('Groq respondeu com erro', upstream.status, detail.slice(0, 300));
+      return res.status(502).json({ error: 'Falha ao consultar o assistente.' });
+    }
 
     const data = await upstream.json();
     const answer = String(
