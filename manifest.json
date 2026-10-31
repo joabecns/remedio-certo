@@ -1,0 +1,20 @@
+{
+  "name": "Remédio Certo",
+  "short_name": "Remédio Certo",
+  "description": "Lembrete de medicamentos com confirmação de dose.",
+  "lang": "pt-BR",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0F766E",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

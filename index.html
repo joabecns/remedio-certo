@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0F766E">
+  <meta name="description" content="Remédio Certo: lembrete de medicamentos com confirmação de dose.">
+  <title>Remédio Certo</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <img src="icons/icon.svg" alt="" width="40" height="40">
+        <h1>Remédio Certo</h1>
+      </div>
+      <button id="btn-theme" class="icon-btn" type="button" aria-label="Ativar modo escuro" aria-pressed="false">
+        <span aria-hidden="true" id="theme-icon">🌙</span>
+      </button>
+    </header>
+
+    <main>
+      <section class="summary" aria-live="polite">
+        <p class="date" id="today-date"></p>
+        <p class="progress-text" id="progress-text"></p>
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Doses confirmadas hoje">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="doses-title">
+        <h2 id="doses-title">Remédios de hoje</h2>
+        <ul class="dose-list" id="dose-list"></ul>
+        <div class="empty" id="empty" hidden>
+          <p>Nenhum remédio cadastrado ainda.</p>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <button class="nav-btn active" type="button" aria-current="page">
+        <span aria-hidden="true">🏠</span><span>Início</span>
+      </button>
+      <button class="nav-btn" type="button" disabled>
+        <span aria-hidden="true">➕</span><span>Adicionar</span>
+      </button>
+      <button class="nav-btn" type="button" disabled>
+        <span aria-hidden="true">📖</span><span>Bulário</span>
+      </button>
+      <button class="nav-btn" type="button" disabled>
+        <span aria-hidden="true">💬</span><span>Chatbot</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

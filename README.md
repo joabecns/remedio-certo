@@ -23,6 +23,18 @@ Muitas pessoas com doenças crônicas esquecem ou tomam o remédio errado. O Rem
 5. **Chatbot assistente:** explica o remédio e o modo de uso.
 6. **Histórico:** doses tomadas, esquecidas e confirmadas.
 
+## Telas
+
+| Tela | Função |
+|---|---|
+| Início | Remédios do dia e status de cada dose |
+| Adicionar remédio | Cadastro com autocomplete e horários |
+| Alerta de dose | Botões "Tomei" e "Adiar 10 min" |
+| Bulário | Bula com letra ampliada |
+| Chatbot | Perguntas sobre o remédio |
+| Histórico | Registro de doses |
+| Configurações | Tamanho da letra, contraste e contato do cuidador |
+
 ## Acessibilidade
 
 O público principal são pessoas idosas, muitas com baixa visão. Por isso:
@@ -30,6 +42,31 @@ O público principal são pessoas idosas, muitas com baixa visão. Por isso:
 - texto com no mínimo 18 px e controle de ampliação;
 - contraste alto e status sempre com ícone e texto (nunca só cor);
 - botões grandes, com área de toque ampla.
+
+## Identidade visual
+
+| Papel | Cor |
+|---|---|
+| Principal | `#0F766E` |
+| Destaque | `#F97316` |
+| Confirmado | `#16A34A` |
+| Atrasado | `#DC2626` |
+| Fundo | `#F8FAFC` |
+| Texto | `#1E293B` |
+
+Logo: `logo-remedio-certo.svg`. Ícone do app: `icone-app-remedio-certo.svg`.
+
+## Como rodar
+
+O protótipo não precisa de instalação. Basta abrir `index.html` em um navegador ou acessar a URL publicada no GitHub Pages.
+
+Para testar como celular no computador:
+
+1. Abra a página no Chrome.
+2. Pressione **F12** e depois **Ctrl+Shift+M** (ou o ícone de celular).
+3. Escolha um modelo de dispositivo.
+
+Para instalar no celular, abra a mesma URL e escolha **"Adicionar à tela inicial"**.
 
 ## Limitações conhecidas do protótipo
 
@@ -48,7 +85,18 @@ O público principal são pessoas idosas, muitas com baixa visão. Por isso:
 
 O Remédio Certo **não substitui** médico, farmacêutico ou orientação profissional. O chatbot e a bula servem para informação geral. Em caso de dúvida, sintomas ou reações, procure um profissional de saúde.
 
-## Autor
+## Roadmap
+
+- [ ] Estrutura do protótipo (telas e navegação)
+- [ ] Cadastro com autocomplete (dados da Anvisa/CMED)
+- [ ] Lembrete com confirmação e alertas
+- [ ] Bulário ampliado
+- [ ] Chatbot assistente
+- [ ] Testes com 3 usuários reais
+- [ ] Ajustes com base no feedback
+- [ ] Reescrita em Flutter (Android e iOS)
+
+## Autores
 
 Joabe Carvalho Neco e Silva e colega de dupla (Projeto Integrador, Faculdade Estadual PIT).
 
