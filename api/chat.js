@@ -1,10 +1,12 @@
 // Backend do assistente de IA do Remédio Certo (função serverless, ex.: Vercel).
 //
+// Usa a API da Groq (compatível com o formato da OpenAI).
+//
 // Variáveis de ambiente (configurar no painel da hospedagem, NUNCA no código):
-//   ANTHROPIC_API_KEY  -> chave da API (obrigatória)
-//   CHAT_MODEL         -> modelo (opcional; padrão: claude-sonnet-5-5)
-//   ALLOWED_ORIGIN     -> endereço do app que pode chamar esta API
-//                         (ex.: https://joabecns.github.io)
+//   GROQ_API_KEY   -> chave da Groq (obrigatória)
+//   GROQ_MODEL     -> modelo (opcional; padrão: llama-3.3-70b-versatile)
+//   ALLOWED_ORIGIN -> endereço do app que pode chamar esta API
+//                     (ex.: https://joabecns.github.io)
 //
 // Este arquivo não guarda conversas. Cada pedido é processado e descartado.
 
@@ -52,7 +54,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido.' });
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'Assistente não configurado.' });
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
@@ -70,22 +72,22 @@ module.exports = async function handler(req, res) {
     : [];
 
   const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
     ...history,
     { role: 'user', content: `${buildContext(medicine)}\n\nPergunta: ${question}` }
   ];
 
   try {
-    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+    const upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json'
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: process.env.CHAT_MODEL || 'claude-sonnet-5-5',
+        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
         max_tokens: 400,
-        system: SYSTEM_PROMPT,
+        temperature: 0.2,
         messages
       })
     });
@@ -93,11 +95,9 @@ module.exports = async function handler(req, res) {
     if (!upstream.ok) return res.status(502).json({ error: 'Falha ao consultar o assistente.' });
 
     const data = await upstream.json();
-    const answer = (data.content || [])
-      .filter(part => part.type === 'text')
-      .map(part => part.text)
-      .join('\n')
-      .trim();
+    const answer = String(
+      (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || ''
+    ).trim();
 
     if (!answer) return res.status(502).json({ error: 'Resposta vazia.' });
     return res.status(200).json({ answer });
