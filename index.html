@@ -35,7 +35,10 @@
 
       <section aria-labelledby="doses-title">
         <h2 id="doses-title">Remédios de hoje</h2>
-        <p class="demo-note" id="demo-note" hidden>Exemplo: cadastre seu primeiro remédio na aba Adicionar.</p>
+        <div class="demo-note" id="demo-note" hidden>
+          <p>Exemplo: cadastre seu primeiro remédio na aba Adicionar.</p>
+          <button class="link-btn" id="demo-alert" type="button">Ver exemplo do alerta</button>
+        </div>
         <ul class="dose-list" id="dose-list"></ul>
         <div class="empty" id="empty" hidden>
           <p>Nenhum remédio cadastrado ainda.</p>
@@ -118,6 +121,19 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <!-- ===== Alerta de dose ===== -->
+    <div class="alert-overlay" id="alert" hidden>
+      <div class="alert-card" role="alertdialog" aria-modal="true"
+           aria-labelledby="alert-title" aria-describedby="alert-desc">
+        <p class="alert-stage" id="alert-stage">Hora do remédio</p>
+        <div class="alert-icon" id="alert-icon" aria-hidden="true"></div>
+        <h2 class="alert-title" id="alert-title"></h2>
+        <p class="alert-desc" id="alert-desc"></p>
+        <button class="action-btn alert-take" id="alert-take" type="button">✅ Tomei</button>
+        <button class="action-btn secondary alert-snooze" id="alert-snooze" type="button">⏰ Adiar 10 min</button>
+      </div>
+    </div>
 
     <nav class="bottom-nav" aria-label="Navegação principal">
       <button class="nav-btn active" type="button" data-view="home" aria-current="page">

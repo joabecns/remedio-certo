@@ -4,8 +4,12 @@
   const KEYS = {
     theme: 'remedioCerto.theme',
     medicines: 'remedioCerto.medicines',
-    status: 'remedioCerto.status'
+    status: 'remedioCerto.status',
+    alerts: 'remedioCerto.alerts'
   };
+  const SNOOZE_MIN = 10;
+  const SECOND_REMINDER_MIN = 15;
+  const CHECK_EVERY_MS = 15000;
   const MAX_TIMES = 6;
   const LATE_AFTER_MIN = 60;
   const MIN_QUERY = 2;
@@ -541,9 +545,15 @@
       return;
     }
 
+    // Pede permissão de notificação no clique de salvar (o navegador exige um gesto do usuário).
+    if ('Notification' in window && Notification.permission === 'default') {
+      try { Notification.requestPermission(); } catch (err) { /* ignora */ }
+    }
+
     resetForm();
     showView('home');
     showToast(`${name} salvo`);
+    checkAlerts();
   });
 
   $('cancel-add').addEventListener('click', () => {
@@ -585,6 +595,186 @@
     }
   }
 
+  // ===== Alerta de dose =====
+  // Regras: 1º aviso no horário; 2º aviso após 15 min sem confirmação;
+  // "Adiar 10 min" reagenda o aviso; após 1 hora sem confirmação a dose fica
+  // "Atrasada" e o cuidador seria avisado (nesta prévia, apenas uma mensagem).
+  let currentAlertKey = null;
+
+  function loadAlerts() {
+    const value = readJSON(KEYS.alerts, {});
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  }
+
+  function saveAlerts(map) {
+    return safeSet(KEYS.alerts, JSON.stringify(map));
+  }
+
+  function isDemoKey(key) {
+    return String(key).indexOf('demo') === 0;
+  }
+
+  function playBeep() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = 880;
+      gain.gain.value = 0.15;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } catch (e) { /* som é opcional */ }
+  }
+
+  function notifyBackground(dose, label) {
+    if (!('Notification' in window) || Notification.permission !== 'granted' || !document.hidden) return;
+    try {
+      new Notification(`${label}: ${dose.name}`, {
+        body: `Horário ${dose.time}. Confirme se já tomou.`,
+        icon: 'icons/icon.svg',
+        tag: dose.key
+      });
+    } catch (e) { /* ignora */ }
+  }
+
+  function showAlert(dose, label) {
+    currentAlertKey = dose.key;
+    $('alert-stage').textContent = label;
+    $('alert-title').textContent = dose.name;
+    $('alert-desc').textContent = `Horário: ${dose.time}. Confirme se já tomou.`;
+
+    const icon = $('alert-icon');
+    icon.innerHTML = '';
+    if (dose.photo) {
+      const img = document.createElement('img');
+      img.src = dose.photo;
+      img.alt = '';
+      icon.appendChild(img);
+    } else {
+      icon.textContent = FORM_ICONS[dose.form] || '💊';
+    }
+
+    $('alert').hidden = false;
+    $('alert-take').focus();
+    if (navigator.vibrate) {
+      try { navigator.vibrate([300, 200, 300]); } catch (e) { /* ignora */ }
+    }
+    playBeep();
+    notifyBackground(dose, label);
+  }
+
+  function hideAlert() {
+    $('alert').hidden = true;
+    currentAlertKey = null;
+  }
+
+  function snoozeAlert() {
+    if (currentAlertKey && !isDemoKey(currentAlertKey)) {
+      const alerts = loadAlerts();
+      const rec = alerts[currentAlertKey] || { count: 1, lastShown: Date.now() };
+      rec.snoozeUntil = Date.now() + SNOOZE_MIN * 60000;
+      alerts[currentAlertKey] = rec;
+      saveAlerts(alerts);
+    }
+    hideAlert();
+    showToast(`Lembrete em ${SNOOZE_MIN} minutos`);
+  }
+
+  function takeFromAlert() {
+    if (currentAlertKey && !isDemoKey(currentAlertKey)) {
+      const map = loadStatus();
+      map[currentAlertKey] = 'taken';
+      saveStatus(map);
+    }
+    hideAlert();
+    renderHome();
+    showToast('Dose registrada');
+  }
+
+  function checkAlerts() {
+    const meds = loadMedicines();
+    if (!meds.length) return;
+    if (!$('alert').hidden) return; // já existe um alerta aberto
+
+    const today = todayKey();
+    const alerts = loadAlerts();
+    const now = Date.now();
+    let changed = false;
+
+    // Remove registros de dias anteriores.
+    Object.keys(alerts).forEach(key => {
+      if (key.indexOf(today) !== 0) { delete alerts[key]; changed = true; }
+    });
+
+    const doses = buildDoses(meds);
+    let toShow = null;
+
+    doses.forEach(dose => {
+      if (dose.status === 'late') {
+        const rec = alerts[dose.key] || { count: 0 };
+        if (!rec.caregiverNotified) {
+          rec.caregiverNotified = true;
+          alerts[dose.key] = rec;
+          changed = true;
+          showToast(`${dose.name} não foi confirmado. O cuidador seria avisado.`);
+        }
+        return;
+      }
+
+      if (dose.status !== 'pending' || nowMinutes() < minutesOf(dose.time)) return;
+      if (toShow) return; // mostra um alerta por vez
+
+      const rec = alerts[dose.key] || { count: 0, lastShown: 0, snoozeUntil: 0 };
+      if (rec.snoozeUntil && now < rec.snoozeUntil) return;
+
+      let due = false;
+      if (rec.count === 0) due = true;                                       // 1º aviso
+      else if (rec.snoozeUntil) due = true;                                  // voltou do adiamento
+      else if (rec.count === 1 && now - rec.lastShown >= SECOND_REMINDER_MIN * 60000) due = true; // 2º aviso
+
+      if (!due) return;
+
+      const label = rec.count === 0 ? 'Hora do remédio' : (rec.count === 1 && !rec.snoozeUntil ? 'Segundo aviso' : 'Lembrete');
+      rec.count += 1;
+      rec.lastShown = now;
+      rec.snoozeUntil = 0;
+      alerts[dose.key] = rec;
+      changed = true;
+      toShow = { dose, label };
+    });
+
+    if (changed) saveAlerts(alerts);
+    if (toShow) showAlert(toShow.dose, toShow.label);
+  }
+
+  $('alert-take').addEventListener('click', takeFromAlert);
+  $('alert-snooze').addEventListener('click', snoozeAlert);
+
+  // Esc adia; Tab alterna entre os dois botões (o foco não sai do alerta).
+  $('alert').addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      snoozeAlert();
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      const take = $('alert-take');
+      const snooze = $('alert-snooze');
+      (document.activeElement === take ? snooze : take).focus();
+    }
+  });
+
+  $('demo-alert').addEventListener('click', () => {
+    showAlert({ key: 'demo-alert', name: 'Losartana potássica 50 mg', form: 'comprimido', time: '08:00', photo: null }, 'Exemplo');
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) checkAlerts();
+  });
+
   // ===== Inicialização =====
   function init() {
     applyTheme(currentTheme());
@@ -602,6 +792,8 @@
     selectForm('comprimido');
     renderHome();
     registerServiceWorker();
+    checkAlerts();
+    setInterval(checkAlerts, CHECK_EVERY_MS);
   }
 
   document.addEventListener('DOMContentLoaded', init);

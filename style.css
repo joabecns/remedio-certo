@@ -556,6 +556,75 @@ input[type="time"] {
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
 }
 
+/* ===== Alerta de dose ===== */
+.alert-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 10;
+}
+
+.alert-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  border: 3px solid var(--late);
+}
+
+.alert-stage {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--late);
+}
+
+.alert-icon {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: grid;
+  place-items: center;
+  font-size: 48px;
+  overflow: hidden;
+}
+
+.alert-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.alert-title {
+  margin: 0 0 6px;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.alert-desc {
+  margin: 0 0 20px;
+  font-size: 20px;
+  color: var(--muted);
+}
+
+.alert-take,
+.alert-snooze {
+  width: 100%;
+  min-height: 64px;
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
 /* ===== Telas pequenas ===== */
 @media (max-width: 360px) {
   body { font-size: 17px; }
