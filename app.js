@@ -924,6 +924,11 @@
   }
 
   function chatAnswer(intent, med) {
+    if (window.RemedioAI && window.RemedioAI.enabled() && intent !== 'bula' && INTENT_QUESTIONS[intent]) {
+      chatAppend('user', INTENT_LABELS[intent] || INTENT_QUESTIONS[intent]);
+      chatAskAI(INTENT_QUESTIONS[intent], med);
+      return;
+    }
     const times = (med.times || []).join(', ') || 'não cadastrados';
     const formName = (FORM_NAMES[med.form] || 'não informada').toLowerCase();
     const name = med.name;
@@ -981,6 +986,12 @@
       return;
     }
 
+    // Com a IA ativa, qualquer pergunta sobre o remédio vai para o assistente.
+    if (window.RemedioAI && window.RemedioAI.enabled()) {
+      chatAskAI(text, med);
+      return;
+    }
+
     const intent = detectIntent(q);
     if (!intent) {
       chatBotSay(OUT_OF_SCOPE_TEXT);
@@ -988,6 +999,45 @@
       return;
     }
     chatAnswer(intent, med);
+  }
+
+  // ----- Assistente de IA (pela API configurada em config.js) -----
+  const INTENT_QUESTIONS = {
+    purpose: 'Para que serve este remédio?',
+    howto: 'Como devo tomar este remédio?',
+    schedule: 'Quais são os horários deste remédio?',
+    missed: 'O que fazer se eu esquecer uma dose?',
+    side: 'Quais são os efeitos colaterais deste remédio?',
+    form: 'Qual é a forma deste remédio?',
+    greet: 'Olá, quero saber sobre este remédio.'
+  };
+
+  const AI_NOTE = 'Resposta gerada por IA, pode conter erros. Confira na bula oficial e com seu médico ou farmacêutico.';
+  let chatHistory = [];
+  let aiBusy = false;
+
+  async function chatAskAI(question, med) {
+    if (aiBusy) {
+      chatBotSay('Aguarde um instante, ainda estou respondendo a pergunta anterior.');
+      return;
+    }
+    aiBusy = true;
+    const waiting = chatAppend('bot', 'Pensando…');
+    waiting.classList.add('typing');
+
+    try {
+      const answer = await window.RemedioAI.ask({ med: med, question: question, history: chatHistory });
+      waiting.remove();
+      chatBotSay(`${answer}\n\n${AI_NOTE}`, true);
+      chatHistory.push({ role: 'user', content: question }, { role: 'assistant', content: answer });
+      chatHistory = chatHistory.slice(-8);
+    } catch (err) {
+      waiting.remove();
+      chatBotSay('Não consegui consultar o assistente agora. Tente de novo daqui a pouco. Enquanto isso, veja a bula oficial ou fale com seu médico ou farmacêutico.', true);
+    } finally {
+      aiBusy = false;
+      chatMedChips(med);
+    }
   }
 
   function chatStart() {

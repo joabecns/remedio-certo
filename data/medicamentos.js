@@ -1,23 +1,152 @@
 /*
-  Lista de nomes para o autocomplete.
-  ATENÇÃO: este é um conjunto de EXEMPLO com nomes comuns, para testar a tela.
+  Lista de nomes para o autocomplete (DCB - denominação comum brasileira).
+  ATENÇÃO: lista de APOIO, com nomes comuns, sem concentração (ex.: "50 mg").
+  O usuário deve escrever a concentração depois do nome, quando souber.
   Antes da versão final, substituir pela base oficial de medicamentos registrados
-  (dados abertos da Anvisa/CMED), mantendo o mesmo formato:
+  (dados abertos da Anvisa/CMED), mantendo o formato:
   { nome: "Nome do medicamento", forma: "comprimido" | "capsula" | "gota" | "injecao" }
 */
 window.MEDICAMENTOS = [
-  { nome: 'Losartana potássica 50 mg', forma: 'comprimido' },
-  { nome: 'Metformina 850 mg', forma: 'comprimido' },
-  { nome: 'Enalapril 10 mg', forma: 'comprimido' },
-  { nome: 'Atenolol 50 mg', forma: 'comprimido' },
-  { nome: 'Anlodipino 5 mg', forma: 'comprimido' },
-  { nome: 'Sinvastatina 20 mg', forma: 'comprimido' },
-  { nome: 'Levotiroxina sódica 50 mcg', forma: 'comprimido' },
-  { nome: 'Glibenclamida 5 mg', forma: 'comprimido' },
-  { nome: 'Hidroclorotiazida 25 mg', forma: 'comprimido' },
-  { nome: 'Ácido acetilsalicílico 100 mg', forma: 'comprimido' },
-  { nome: 'Omeprazol 20 mg', forma: 'capsula' },
+  // Pressão e coração
+  { nome: 'Losartana potássica', forma: 'comprimido' },
+  { nome: 'Valsartana', forma: 'comprimido' },
+  { nome: 'Enalapril maleato', forma: 'comprimido' },
+  { nome: 'Captopril', forma: 'comprimido' },
+  { nome: 'Lisinopril', forma: 'comprimido' },
+  { nome: 'Ramipril', forma: 'capsula' },
+  { nome: 'Anlodipino besilato', forma: 'comprimido' },
+  { nome: 'Nifedipino', forma: 'comprimido' },
+  { nome: 'Verapamil', forma: 'comprimido' },
+  { nome: 'Diltiazem', forma: 'comprimido' },
+  { nome: 'Atenolol', forma: 'comprimido' },
+  { nome: 'Metoprolol tartarato', forma: 'comprimido' },
+  { nome: 'Propranolol', forma: 'comprimido' },
+  { nome: 'Carvedilol', forma: 'comprimido' },
+  { nome: 'Bisoprolol', forma: 'comprimido' },
+  { nome: 'Clonidina', forma: 'comprimido' },
+  { nome: 'Hidralazina', forma: 'comprimido' },
+  { nome: 'Hidroclorotiazida', forma: 'comprimido' },
+  { nome: 'Clortalidona', forma: 'comprimido' },
+  { nome: 'Indapamida', forma: 'comprimido' },
+  { nome: 'Furosemida', forma: 'comprimido' },
+  { nome: 'Espironolactona', forma: 'comprimido' },
+  { nome: 'Amiodarona', forma: 'comprimido' },
+  { nome: 'Digoxina', forma: 'comprimido' },
+  { nome: 'Isossorbida dinitrato', forma: 'comprimido' },
+  { nome: 'Sinvastatina', forma: 'comprimido' },
+  { nome: 'Atorvastatina cálcica', forma: 'comprimido' },
+  { nome: 'Rosuvastatina cálcica', forma: 'comprimido' },
+  { nome: 'Pravastatina sódica', forma: 'comprimido' },
+  { nome: 'Ezetimiba', forma: 'comprimido' },
+  { nome: 'Varfarina sódica', forma: 'comprimido' },
+  { nome: 'Clopidogrel', forma: 'comprimido' },
+  { nome: 'Ácido acetilsalicílico', forma: 'comprimido' },
+  { nome: 'Rivaroxabana', forma: 'comprimido' },
+  { nome: 'Apixabana', forma: 'comprimido' },
+  { nome: 'Enoxaparina sódica', forma: 'injecao' },
+
+  // Diabetes
+  { nome: 'Metformina cloridrato', forma: 'comprimido' },
+  { nome: 'Glibenclamida', forma: 'comprimido' },
+  { nome: 'Gliclazida', forma: 'comprimido' },
+  { nome: 'Glimepirida', forma: 'comprimido' },
+  { nome: 'Sitagliptina', forma: 'comprimido' },
+  { nome: 'Empagliflozina', forma: 'comprimido' },
+  { nome: 'Dapagliflozina', forma: 'comprimido' },
+  { nome: 'Acarbose', forma: 'comprimido' },
   { nome: 'Insulina NPH', forma: 'injecao' },
   { nome: 'Insulina regular', forma: 'injecao' },
-  { nome: 'Dipirona sódica (gotas)', forma: 'gota' }
+  { nome: 'Insulina glargina', forma: 'injecao' },
+
+  // Tireoide, ossos e gota
+  { nome: 'Levotiroxina sódica', forma: 'comprimido' },
+  { nome: 'Alendronato sódico', forma: 'comprimido' },
+  { nome: 'Alopurinol', forma: 'comprimido' },
+  { nome: 'Colchicina', forma: 'comprimido' },
+  { nome: 'Febuxostate', forma: 'comprimido' },
+
+  // Estômago e intestino
+  { nome: 'Omeprazol', forma: 'capsula' },
+  { nome: 'Esomeprazol', forma: 'capsula' },
+  { nome: 'Pantoprazol sódico', forma: 'comprimido' },
+  { nome: 'Domperidona', forma: 'comprimido' },
+  { nome: 'Metoclopramida', forma: 'comprimido' },
+  { nome: 'Bromoprida', forma: 'comprimido' },
+  { nome: 'Ondansetrona', forma: 'comprimido' },
+  { nome: 'Sucralfato', forma: 'comprimido' },
+  { nome: 'Loperamida', forma: 'capsula' },
+  { nome: 'Simeticona', forma: 'comprimido' },
+  { nome: 'Simeticona (gotas)', forma: 'gota' },
+
+  // Dor e febre
+  { nome: 'Dipirona sódica', forma: 'comprimido' },
+  { nome: 'Dipirona sódica (gotas)', forma: 'gota' },
+  { nome: 'Paracetamol', forma: 'comprimido' },
+  { nome: 'Ibuprofeno', forma: 'comprimido' },
+  { nome: 'Naproxeno sódico', forma: 'comprimido' },
+  { nome: 'Diclofenaco sódico', forma: 'comprimido' },
+  { nome: 'Nimesulida', forma: 'comprimido' },
+  { nome: 'Tramadol', forma: 'capsula' },
+
+  // Sistema nervoso e humor
+  { nome: 'Donepezila', forma: 'comprimido' },
+  { nome: 'Memantina', forma: 'comprimido' },
+  { nome: 'Sertralina', forma: 'comprimido' },
+  { nome: 'Fluoxetina', forma: 'capsula' },
+  { nome: 'Escitalopram', forma: 'comprimido' },
+  { nome: 'Citalopram', forma: 'comprimido' },
+  { nome: 'Amitriptilina', forma: 'comprimido' },
+  { nome: 'Venlafaxina', forma: 'capsula' },
+  { nome: 'Bupropiona', forma: 'comprimido' },
+  { nome: 'Alprazolam', forma: 'comprimido' },
+  { nome: 'Clonazepam', forma: 'comprimido' },
+  { nome: 'Diazepam', forma: 'comprimido' },
+  { nome: 'Lorazepam', forma: 'comprimido' },
+  { nome: 'Zolpidem', forma: 'comprimido' },
+  { nome: 'Risperidona', forma: 'comprimido' },
+  { nome: 'Quetiapina', forma: 'comprimido' },
+  { nome: 'Olanzapina', forma: 'comprimido' },
+  { nome: 'Haloperidol', forma: 'comprimido' },
+  { nome: 'Carbamazepina', forma: 'comprimido' },
+  { nome: 'Levetiracetam', forma: 'comprimido' },
+  { nome: 'Lamotrigina', forma: 'comprimido' },
+  { nome: 'Fenobarbital', forma: 'comprimido' },
+  { nome: 'Gabapentina', forma: 'capsula' },
+  { nome: 'Pregabalina', forma: 'capsula' },
+  { nome: 'Levodopa e carbidopa', forma: 'comprimido' },
+  { nome: 'Pramipexol', forma: 'comprimido' },
+
+  // Alergia, respiração e inflamação
+  { nome: 'Prednisona', forma: 'comprimido' },
+  { nome: 'Prednisolona', forma: 'comprimido' },
+  { nome: 'Dexametasona', forma: 'comprimido' },
+  { nome: 'Loratadina', forma: 'comprimido' },
+  { nome: 'Desloratadina', forma: 'comprimido' },
+  { nome: 'Cetirizina', forma: 'comprimido' },
+  { nome: 'Hidroxizina', forma: 'comprimido' },
+  { nome: 'Montelucaste sódico', forma: 'comprimido' },
+
+  // Infecções
+  { nome: 'Amoxicilina', forma: 'capsula' },
+  { nome: 'Amoxicilina com clavulanato de potássio', forma: 'comprimido' },
+  { nome: 'Azitromicina', forma: 'comprimido' },
+  { nome: 'Claritromicina', forma: 'comprimido' },
+  { nome: 'Ciprofloxacino', forma: 'comprimido' },
+  { nome: 'Levofloxacino', forma: 'comprimido' },
+  { nome: 'Sulfametoxazol e trimetoprima', forma: 'comprimido' },
+  { nome: 'Cefalexina', forma: 'capsula' },
+  { nome: 'Doxiciclina', forma: 'capsula' },
+  { nome: 'Nitrofurantoína', forma: 'capsula' },
+  { nome: 'Metronidazol', forma: 'comprimido' },
+  { nome: 'Fluconazol', forma: 'capsula' },
+  { nome: 'Aciclovir', forma: 'comprimido' },
+
+  // Próstata, bexiga e outros
+  { nome: 'Finasterida', forma: 'comprimido' },
+  { nome: 'Tansulosina', forma: 'capsula' },
+  { nome: 'Oxibutinina', forma: 'comprimido' },
+  { nome: 'Sulfato ferroso', forma: 'comprimido' },
+  { nome: 'Ácido fólico', forma: 'comprimido' },
+  { nome: 'Vitamina D (colecalciferol)', forma: 'gota' },
+  { nome: 'Cianocobalamina (vitamina B12)', forma: 'injecao' }
 ];

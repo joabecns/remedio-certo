@@ -1,9 +1,11 @@
-const CACHE = 'remedio-certo-v5';
+const CACHE = 'remedio-certo-v6';
 const SHELL = [
   './',
   './index.html',
   './style.css',
   './app.js',
+  './config.js',
+  './chat-ai.js',
   './data/medicamentos.js',
   './manifest.json',
   './icons/icon.svg',

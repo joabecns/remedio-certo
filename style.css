@@ -722,6 +722,11 @@ input[type="time"] {
   border-bottom-right-radius: 4px;
 }
 
+.chat-msg.typing {
+  opacity: 0.7;
+  font-style: italic;
+}
+
 .chat-msg .bula-link {
   margin-top: 10px;
 }
