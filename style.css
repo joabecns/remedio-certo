@@ -625,6 +625,50 @@ input[type="time"] {
   margin-bottom: 12px;
 }
 
+/* ===== Tela: Bulário ===== */
+.bula-intro,
+.bula-tip {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+.bula-tip {
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.bula-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.bula-item {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.bula-name {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.bula-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  width: 100%;
+  min-height: 56px;
+  font-size: 17px;
+}
+
 /* ===== Telas pequenas ===== */
 @media (max-width: 360px) {
   body { font-size: 17px; }

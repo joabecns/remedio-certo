@@ -1,4 +1,4 @@
-const CACHE = 'remedio-certo-v3';
+const CACHE = 'remedio-certo-v4';
 const SHELL = [
   './',
   './index.html',

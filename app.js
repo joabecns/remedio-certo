@@ -563,9 +563,9 @@
 
   // ===== Navegação =====
   function showView(name) {
-    const isAdd = name === 'add';
-    $('view-home').hidden = isAdd;
-    $('view-add').hidden = !isAdd;
+    $('view-home').hidden = name !== 'home';
+    $('view-add').hidden = name !== 'add';
+    $('view-bula').hidden = name !== 'bula';
 
     document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
       const active = btn.dataset.view === name;
@@ -574,12 +574,48 @@
       else btn.removeAttribute('aria-current');
     });
 
-    if (isAdd) {
+    if (name === 'add') {
       $('add-title').focus();
+    } else if (name === 'bula') {
+      renderBula();
+      $('bula-title').focus();
     } else {
       renderHome();
     }
     window.scrollTo(0, 0);
+  }
+
+  // ===== Bulário: link para o site oficial =====
+  // CONFIRMAR antes de publicar: endereço da página de consulta do Bulário Eletrônico da Anvisa.
+  const BULARIO_URL = 'https://consultas.anvisa.gov.br/#/bulario/';
+
+  function renderBula() {
+    const list = $('bula-list');
+    list.innerHTML = '';
+
+    const meds = loadMedicines();
+    const names = meds.length
+      ? Array.from(new Set(meds.map(m => m.name)))
+      : DEMO_DOSES.map(d => d.name);
+
+    names.forEach(name => {
+      const item = document.createElement('li');
+      item.className = 'bula-item';
+
+      const label = document.createElement('p');
+      label.className = 'bula-name';
+      label.textContent = name;
+
+      const link = document.createElement('a');
+      link.className = 'action-btn small-btn bula-link';
+      link.href = BULARIO_URL;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = `Abrir bula de ${name} no site da Anvisa`;
+
+      item.append(label, link);
+      list.appendChild(item);
+    });
   }
 
   document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {

@@ -47,6 +47,14 @@
       </section>
     </main>
 
+    <!-- ===== Tela: Bulário (link para o site oficial da Anvisa) ===== -->
+    <main id="view-bula" hidden>
+      <h2 class="view-title" tabindex="-1" id="bula-title">Bulário</h2>
+      <p class="bula-intro">A bula abre no site oficial da Anvisa. Lá, escolha <strong>Bulário Eletrônico</strong> e digite o nome do remédio.</p>
+      <p class="bula-tip">Para aumentar a letra, use o zoom do navegador (no celular, o ajuste de texto do próprio aparelho).</p>
+      <ul class="bula-list" id="bula-list"></ul>
+    </main>
+
     <!-- ===== Tela: Adicionar remédio ===== -->
     <main id="view-add" hidden>
       <h2 class="view-title" tabindex="-1" id="add-title">Adicionar remédio</h2>
@@ -142,7 +150,7 @@
       <button class="nav-btn" type="button" data-view="add">
         <span aria-hidden="true">➕</span><span>Adicionar</span>
       </button>
-      <button class="nav-btn" type="button" disabled>
+      <button class="nav-btn" type="button" data-view="bula">
         <span aria-hidden="true">📖</span><span>Bulário</span>
       </button>
       <button class="nav-btn" type="button" disabled>
