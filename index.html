@@ -23,7 +23,8 @@
       </button>
     </header>
 
-    <main>
+    <!-- ===== Tela: Início ===== -->
+    <main id="view-home">
       <section class="summary" aria-live="polite">
         <p class="date" id="today-date"></p>
         <p class="progress-text" id="progress-text"></p>
@@ -34,18 +35,95 @@
 
       <section aria-labelledby="doses-title">
         <h2 id="doses-title">Remédios de hoje</h2>
+        <p class="demo-note" id="demo-note" hidden>Exemplo: cadastre seu primeiro remédio na aba Adicionar.</p>
         <ul class="dose-list" id="dose-list"></ul>
         <div class="empty" id="empty" hidden>
           <p>Nenhum remédio cadastrado ainda.</p>
+          <button class="action-btn link-btn" id="go-add-empty" type="button">Adicionar remédio</button>
         </div>
       </section>
     </main>
 
+    <!-- ===== Tela: Adicionar remédio ===== -->
+    <main id="view-add" hidden>
+      <h2 class="view-title" tabindex="-1" id="add-title">Adicionar remédio</h2>
+
+      <form id="med-form" novalidate>
+        <!-- Nome com autocomplete -->
+        <div class="field">
+          <label for="med-name">Nome do remédio</label>
+          <div class="combo">
+            <input id="med-name" name="nome" type="text" autocomplete="off"
+                   role="combobox" aria-autocomplete="list" aria-expanded="false"
+                   aria-controls="med-suggestions" placeholder="Digite pelo menos 2 letras"
+                   required>
+            <ul id="med-suggestions" class="suggestions" role="listbox" aria-label="Sugestões de remédios" hidden></ul>
+          </div>
+          <p class="hint">Escolha uma sugestão da lista para garantir o nome correto.</p>
+          <p class="field-error" id="err-name" role="alert" hidden></p>
+        </div>
+
+        <!-- Forma farmacêutica -->
+        <fieldset class="field">
+          <legend>Forma do remédio</legend>
+          <div class="options" id="form-options">
+            <label class="option">
+              <input type="radio" name="forma" value="comprimido" checked>
+              <span aria-hidden="true">💊</span><span>Comprimido</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="forma" value="capsula">
+              <span aria-hidden="true">💊</span><span>Cápsula</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="forma" value="gota">
+              <span aria-hidden="true">💧</span><span>Gota</span>
+            </label>
+            <label class="option">
+              <input type="radio" name="forma" value="injecao">
+              <span aria-hidden="true">💉</span><span>Injeção</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Horários -->
+        <fieldset class="field">
+          <legend>Horários</legend>
+          <div id="times"></div>
+          <button class="action-btn secondary small-btn" id="add-time" type="button">+ Adicionar horário</button>
+          <p class="field-error" id="err-times" role="alert" hidden></p>
+        </fieldset>
+
+        <!-- Foto opcional -->
+        <div class="field">
+          <span class="field-label" id="photo-label">Foto da caixa (opcional)</span>
+          <div class="photo-row">
+            <div class="photo-preview" id="photo-preview" aria-hidden="true">📷</div>
+            <div class="photo-actions">
+              <label class="action-btn small-btn file-btn" for="med-photo">Tirar ou escolher foto</label>
+              <input id="med-photo" type="file" accept="image/*" capture="environment" aria-labelledby="photo-label" hidden>
+              <button class="link-btn" id="remove-photo" type="button" hidden>Remover foto</button>
+            </div>
+          </div>
+          <p class="field-error" id="err-photo" role="alert" hidden></p>
+        </div>
+
+        <p class="field-error form-error" id="err-form" role="alert" hidden></p>
+
+        <div class="form-actions">
+          <button class="action-btn" type="submit">Salvar remédio</button>
+          <button class="action-btn ghost" id="cancel-add" type="button">Cancelar</button>
+        </div>
+      </form>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
     <nav class="bottom-nav" aria-label="Navegação principal">
-      <button class="nav-btn active" type="button" aria-current="page">
+      <button class="nav-btn active" type="button" data-view="home" aria-current="page">
         <span aria-hidden="true">🏠</span><span>Início</span>
       </button>
-      <button class="nav-btn" type="button" disabled>
+      <button class="nav-btn" type="button" data-view="add">
         <span aria-hidden="true">➕</span><span>Adicionar</span>
       </button>
       <button class="nav-btn" type="button" disabled>
@@ -57,6 +135,7 @@
     </nav>
   </div>
 
+  <script src="data/medicamentos.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
