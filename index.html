@@ -55,6 +55,19 @@
       <ul class="bula-list" id="bula-list"></ul>
     </main>
 
+    <!-- ===== Tela: Chatbot (respostas fixas, só sobre os remédios cadastrados) ===== -->
+    <main id="view-chat" hidden>
+      <h2 class="view-title" tabindex="-1" id="chat-title">Assistente</h2>
+      <p class="chat-disclaimer">Respostas fixas e simples. Não substituem o médico nem o farmacêutico, e só falam sobre os remédios que você cadastrou.</p>
+      <div class="chat-log" id="chat-log" role="log" aria-live="polite" aria-label="Conversa com o assistente"></div>
+      <div class="chat-chips" id="chat-chips"></div>
+      <form class="chat-form" id="chat-form">
+        <label class="visually-hidden" for="chat-input">Digite sua pergunta</label>
+        <input id="chat-input" type="text" autocomplete="off" placeholder="Ex.: como devo tomar?" maxlength="200">
+        <button class="action-btn small-btn" type="submit">Enviar</button>
+      </form>
+    </main>
+
     <!-- ===== Tela: Adicionar remédio ===== -->
     <main id="view-add" hidden>
       <h2 class="view-title" tabindex="-1" id="add-title">Adicionar remédio</h2>
@@ -153,7 +166,7 @@
       <button class="nav-btn" type="button" data-view="bula">
         <span aria-hidden="true">📖</span><span>Bulário</span>
       </button>
-      <button class="nav-btn" type="button" disabled>
+      <button class="nav-btn" type="button" data-view="chat">
         <span aria-hidden="true">💬</span><span>Chatbot</span>
       </button>
     </nav>

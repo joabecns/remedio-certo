@@ -566,6 +566,7 @@
     $('view-home').hidden = name !== 'home';
     $('view-add').hidden = name !== 'add';
     $('view-bula').hidden = name !== 'bula';
+    $('view-chat').hidden = name !== 'chat';
 
     document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
       const active = btn.dataset.view === name;
@@ -579,6 +580,9 @@
     } else if (name === 'bula') {
       renderBula();
       $('bula-title').focus();
+    } else if (name === 'chat') {
+      chatStart();
+      $('chat-title').focus();
     } else {
       renderHome();
     }
@@ -809,6 +813,208 @@
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) checkAlerts();
+  });
+
+  // ===== Chatbot: respostas fixas, só sobre os remédios cadastrados =====
+  // Não usa IA nem envia dados para fora do aparelho. Cada resposta é um texto fixo
+  // preenchido apenas com o nome, a forma e os horários cadastrados.
+
+  const EMERGENCY_WORDS = ['socorro', 'emergencia', 'desmai', 'falta de ar', 'dor no peito',
+    'sangramento', 'convuls', 'overdose', 'muito mal', 'nao consigo respirar'];
+  const EMERGENCY_TEXT = 'Se for uma emergência, ligue 192 (SAMU) agora ou procure o pronto-socorro mais próximo.';
+  const OUT_OF_SCOPE_TEXT = 'Só posso responder sobre os remédios que você cadastrou. Para outras dúvidas, procure seu médico ou farmacêutico.';
+
+  const INTENT_WORDS = [
+    ['missed', ['esqueci', 'esquec', 'perdi', 'atrasad', 'dobrar', 'em dobro', 'duas vezes']],
+    ['side', ['efeito', 'colateral', 'reacao', 'passar mal', 'enjoo', 'tontura', 'mal estar']],
+    ['bula', ['bula', 'bulario']],
+    ['schedule', ['horario', 'que hora', 'quando']],
+    ['purpose', ['para que', 'serve', 'indica', 'usar']],
+    ['form', ['forma', 'tipo', 'comprimido', 'capsula', 'gota', 'injecao']],
+    ['howto', ['como tomar', 'como usar', 'tomar', 'dose', 'quantos', 'quanto']],
+    ['greet', ['oi', 'ola', 'bom dia', 'boa tarde', 'boa noite']]
+  ];
+
+  const INTENT_LABELS = {
+    purpose: 'Para que serve?',
+    howto: 'Como tomar?',
+    schedule: 'Horários',
+    missed: 'Esqueci uma dose',
+    side: 'Efeitos colaterais',
+    bula: 'Ver bula',
+    form: 'Forma'
+  };
+
+  let chatMedId = null;
+
+  function medKeyword(name) {
+    const first = normalize(name).split(/\s+/)[0] || '';
+    return first.length >= 4 ? first : '';
+  }
+
+  function detectIntent(q) {
+    // Saudação só vale no início da frase, para não confundir palavras como "foi" ou "dois".
+    if (/^(oi|ola|bom dia|boa tarde|boa noite)\b/.test(q)) return 'greet';
+    for (const [intent, words] of INTENT_WORDS) {
+      if (intent === 'greet') continue;
+      if (words.some(w => q.indexOf(w) !== -1)) return intent;
+    }
+    return null;
+  }
+
+  function chatAppend(role, text) {
+    const log = $('chat-log');
+    const msg = document.createElement('div');
+    msg.className = 'chat-msg ' + role;
+    msg.textContent = text;
+    log.appendChild(msg);
+    log.scrollTop = log.scrollHeight;
+    return msg;
+  }
+
+  function chatBotSay(text, linkToBula) {
+    const msg = chatAppend('bot', text);
+    if (linkToBula) {
+      const link = document.createElement('a');
+      link.className = 'action-btn small-btn bula-link';
+      link.href = BULARIO_URL;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'Abrir bula oficial (site da Anvisa)';
+      msg.appendChild(link);
+    }
+  }
+
+  function chatSetChips(items) {
+    const box = $('chat-chips');
+    box.innerHTML = '';
+    items.forEach(item => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip';
+      btn.textContent = item.label;
+      btn.addEventListener('click', item.action);
+      box.appendChild(btn);
+    });
+  }
+
+  function chatMedChips(med) {
+    const items = ['purpose', 'howto', 'schedule', 'missed', 'side', 'bula'].map(intent => ({
+      label: INTENT_LABELS[intent],
+      action: () => chatAnswer(intent, med)
+    }));
+    if (loadMedicines().length > 1) {
+      items.push({ label: 'Trocar remédio', action: chatAskWhich });
+    }
+    chatSetChips(items);
+  }
+
+  function chatAskWhich() {
+    const meds = loadMedicines();
+    chatBotSay('Sobre qual remédio você quer saber?');
+    chatSetChips(meds.map(m => ({
+      label: m.name,
+      action: () => {
+        chatMedId = m.id;
+        chatAppend('user', m.name);
+        chatBotSay(`Certo, sobre ${m.name}. O que você quer saber?`);
+        chatMedChips(m);
+      }
+    })));
+  }
+
+  function chatAnswer(intent, med) {
+    const times = (med.times || []).join(', ') || 'não cadastrados';
+    const formName = (FORM_NAMES[med.form] || 'não informada').toLowerCase();
+    const name = med.name;
+
+    const replies = {
+      purpose: `Eu não tenho a indicação de ${name} cadastrada. Para saber para que ele serve, veja a bula oficial ou pergunte ao seu médico ou farmacêutico.`,
+      howto: `Você cadastrou ${name} (${formName}) nestes horários: ${times}. Tome conforme a receita do seu médico e a bula. Não mude a dose sem orientação.`,
+      schedule: `Horários cadastrados para ${name}: ${times}.`,
+      form: `${name} está cadastrado como ${formName}.`,
+      missed: 'Se esquecer uma dose, não tome duas doses juntas sem orientação. Confirme com seu médico ou farmacêutico o que fazer.',
+      side: `Não tenho a lista de efeitos colaterais de ${name}. Veja a seção de reações adversas na bula oficial. Se sentir mal, procure seu médico ou farmacêutico. ${EMERGENCY_TEXT}`,
+      bula: 'Você pode consultar a bula oficial no site da Anvisa. Escolha "Bulário Eletrônico" e digite o nome do remédio.',
+      greet: `Olá! Em que posso ajudar sobre ${name}?`
+    };
+
+    chatBotSay(replies[intent] || OUT_OF_SCOPE_TEXT, intent === 'bula' || intent === 'purpose' || intent === 'side');
+    chatMedChips(med);
+  }
+
+  function chatHandle(text) {
+    const q = normalize(text);
+    chatAppend('user', text);
+
+    if (EMERGENCY_WORDS.some(w => q.indexOf(w) !== -1)) {
+      chatBotSay(EMERGENCY_TEXT);
+      return;
+    }
+
+    const meds = loadMedicines();
+    if (!meds.length) {
+      chatBotSay('Você ainda não cadastrou nenhum remédio. Cadastre um na aba Adicionar para eu poder ajudar.');
+      chatSetChips([{ label: 'Ir para Adicionar', action: () => showView('add') }]);
+      return;
+    }
+
+    if (q.indexOf('trocar') !== -1 || q.indexOf('outro remedio') !== -1) {
+      chatAskWhich();
+      return;
+    }
+
+    // Se o nome de um remédio cadastrado aparecer na pergunta, ele passa a ser o assunto.
+    const mentioned = meds.find(m => {
+      const kw = medKeyword(m.name);
+      return kw && q.indexOf(kw) !== -1;
+    });
+    if (mentioned) chatMedId = mentioned.id;
+
+    let med = meds.find(m => m.id === chatMedId) || null;
+    if (!med && meds.length === 1) {
+      med = meds[0];
+      chatMedId = med.id;
+    }
+    if (!med) {
+      chatAskWhich();
+      return;
+    }
+
+    const intent = detectIntent(q);
+    if (!intent) {
+      chatBotSay(OUT_OF_SCOPE_TEXT);
+      chatMedChips(med);
+      return;
+    }
+    chatAnswer(intent, med);
+  }
+
+  function chatStart() {
+    $('chat-log').innerHTML = '';
+    const meds = loadMedicines();
+    if (!meds.length) {
+      chatBotSay('Olá! Ainda não há remédios cadastrados. Cadastre um para eu poder ajudar.');
+      chatSetChips([{ label: 'Ir para Adicionar', action: () => showView('add') }]);
+      return;
+    }
+    if (meds.length === 1) {
+      chatMedId = meds[0].id;
+      chatBotSay(`Olá! Posso responder sobre ${meds[0].name}. Escolha uma opção ou escreva sua pergunta.`);
+      chatMedChips(meds[0]);
+      return;
+    }
+    chatBotSay('Olá! Escolha um remédio ou escreva sua pergunta com o nome dele.');
+    chatAskWhich();
+  }
+
+  $('chat-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const input = $('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    chatHandle(text.slice(0, 200));
   });
 
   // ===== Inicialização =====
