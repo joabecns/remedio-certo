@@ -3,5 +3,5 @@
 // Deixe vazio para usar apenas as respostas fixas.
 // A chave da API NÃO fica aqui: ela fica no backend, como variável de ambiente.
 window.REMEDIO_CERTO_CONFIG = {
-  chatApiUrl: 'https://remedio-certo.vercel.app/'
+  chatApiUrl: 'https://remedio-certo.vercel.app/api/chat'
 };
