@@ -85,17 +85,6 @@ Para instalar no celular, abra a mesma URL e escolha **"Adicionar à tela inicia
 
 O Remédio Certo **não substitui** médico, farmacêutico ou orientação profissional. O chatbot e a bula servem para informação geral. Em caso de dúvida, sintomas ou reações, procure um profissional de saúde.
 
-## Roadmap
-
-- [ ] Estrutura do protótipo (telas e navegação)
-- [ ] Cadastro com autocomplete (dados da Anvisa/CMED)
-- [ ] Lembrete com confirmação e alertas
-- [ ] Bulário ampliado
-- [ ] Chatbot assistente
-- [ ] Testes com 3 usuários reais
-- [ ] Ajustes com base no feedback
-- [ ] Reescrita em Flutter (Android e iOS)
-
 ## Autores
 
 Joabe Carvalho Neco e Silva e colega de dupla (Projeto Integrador, Faculdade Estadual PIT).
