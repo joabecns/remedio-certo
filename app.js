@@ -141,97 +141,390 @@
     return doses;
   }
 
-  // ===== Início =====
+  // ===== Datas e anel de progresso =====
+  const RING_LEN = 2 * Math.PI * 50; // circunferência do anel (raio 50 no SVG)
+
+  function keyOf(d) {
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  function dayKeyFor(offset) {
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    return keyOf(d);
+  }
+
+  function setRing(circle, percent) {
+    const p = Math.min(100, Math.max(0, percent));
+    circle.style.strokeDasharray = String(RING_LEN);
+    circle.style.strokeDashoffset = String(RING_LEN * (1 - p / 100));
+  }
+
+  function formatMin(m) {
+    if (m < 60) return `${m} min`;
+    const h = Math.floor(m / 60);
+    const rest = m % 60;
+    return rest ? `${h} h ${rest} min` : `${h} h`;
+  }
+
   function renderDate() {
     const text = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
     $('today-date').textContent = text;
   }
 
-  function renderSummary(doses) {
-    const taken = doses.filter(d => d.status === 'taken').length;
-    const total = doses.length;
-    const percent = total ? Math.round((taken / total) * 100) : 0;
-
-    $('progress-text').textContent = total ? `${taken} de ${total} doses tomadas` : 'Sem doses hoje';
-    const bar = $('progress-bar');
-    bar.style.width = percent + '%';
-    bar.parentElement.setAttribute('aria-valuenow', String(percent));
+  function sortedDoses(doses) {
+    return doses.slice().sort((a, b) => a.time.localeCompare(b.time));
   }
 
-  function renderDoses(doses, isDemo) {
-    const list = $('dose-list');
+  // Primeira dose de hoje que ainda não foi confirmada.
+  function nextPending(doses) {
+    return sortedDoses(doses).find(d => d.status !== 'taken') || null;
+  }
+
+  // Nome e horário a partir da chave da dose (dia|id|horário).
+  function doseInfo(key) {
+    const parts = String(key).split('|');
+    const med = loadMedicines().find(m => String(m.id) === parts[1]);
+    return { name: med ? med.name : 'Remédio', time: parts[2] || '' };
+  }
+
+  function markStatus(key, value) {
+    const map = loadStatus();
+    if (value) map[key] = value;
+    else delete map[key];
+    saveStatus(map);
+  }
+
+  // ===== Início: Tomei, confirmação com desfazer, próxima dose e linha do tempo =====
+  let confirmTimer = null;
+  let lastAction = null; // { key, prev } guarda o estado anterior para o botão Desfazer
+
+  function hideConfirm() {
+    clearTimeout(confirmTimer);
+    $('confirm').hidden = true;
+    lastAction = null;
+  }
+
+  function showConfirm(key, prev) {
+    const info = doseInfo(key);
+    const after = nextPending(buildDoses(loadMedicines()));
+    lastAction = { key: key, prev: prev };
+    $('confirm-detail').textContent = after
+      ? `${info.name}, às ${info.time}. Próxima: ${after.name}, às ${after.time}.`
+      : `${info.name}, às ${info.time}. Todas as doses de hoje foram tomadas.`;
+    $('confirm').hidden = false;
+    clearTimeout(confirmTimer);
+    confirmTimer = setTimeout(hideConfirm, 6000);
+  }
+
+  function undoLast() {
+    if (lastAction) {
+      markStatus(lastAction.key, lastAction.prev);
+      renderHome();
+      showToast('Registro desfeito');
+    }
+    hideConfirm();
+  }
+
+  // Registra a próxima dose (a que aparece em destaque na tela).
+  function takeNext() {
+    const meds = loadMedicines();
+    if (!meds.length) return;
+    const next = nextPending(buildDoses(meds));
+    if (!next) return;
+    const prev = loadStatus()[next.key];
+    markStatus(next.key, 'taken');
+    renderHome();
+    showConfirm(next.key, prev);
+  }
+
+  function renderHero(next, taken, total) {
+    const percent = total ? Math.round((taken / total) * 100) : 0;
+    setRing($('ring-fill'), percent);
+    $('ring-text').textContent = `${taken}/${total}`;
+
+    const avatar = $('hero-icon');
+    avatar.innerHTML = '';
+    if (next && next.photo) {
+      const img = document.createElement('img');
+      img.src = next.photo;
+      img.alt = '';
+      avatar.appendChild(img);
+    } else {
+      avatar.textContent = next ? (FORM_ICONS[next.form] || '💊') : '🎉';
+    }
+
+    if (!next) {
+      $('hero-eyebrow').textContent = total ? 'Tudo tomado hoje' : 'Sem doses hoje';
+      $('hero-name').textContent = total ? 'Parabéns!' : 'Nenhum remédio cadastrado';
+      $('hero-time').textContent = '';
+      $('hero-when').textContent = '';
+      $('hero-after').textContent = total
+        ? 'Todas as doses de hoje foram confirmadas. Volte amanhã para as próximas.'
+        : 'Cadastre um remédio para ver a próxima dose aqui.';
+      return;
+    }
+
+    const late = next.status === 'late';
+    const diff = minutesOf(next.time) - nowMinutes();
+    let when;
+    if (late) when = diff < 0 ? `· atrasada há ${formatMin(-diff)}` : '· atrasada';
+    else if (diff > 0) when = `· em ${formatMin(diff)}`;
+    else when = '· agora';
+
+    $('hero-eyebrow').textContent = late ? 'Dose atrasada' : 'Próxima dose';
+    $('hero-name').textContent = next.name;
+    $('hero-time').textContent = next.time;
+    $('hero-when').textContent = when;
+    $('hero-after').textContent = late
+      ? 'Ainda não foi confirmada. Se já tomou, toque em Tomei.'
+      : 'Quando tomar, toque no botão Tomei.';
+  }
+
+  const STATE_TEXT = { taken: 'Tomado', late: 'Atrasado', next: 'Próxima', pending: 'Pendente' };
+
+  function renderTimeline(doses, next) {
+    const list = $('timeline');
     list.innerHTML = '';
 
-    doses
-      .slice()
-      .sort((a, b) => a.time.localeCompare(b.time))
-      .forEach(dose => {
-        const item = document.createElement('li');
-        item.className = 'dose' +
-          (dose.status === 'late' ? ' is-late' : '') +
-          (dose.status === 'taken' ? ' is-taken' : '');
+    doses.forEach(dose => {
+      const isNext = !!next && dose.key === next.key;
+      let state = 'pending';
+      if (dose.status === 'taken') state = 'taken';
+      else if (dose.status === 'late') state = 'late';
+      else if (isNext) state = 'next';
 
-        const icon = document.createElement('div');
-        icon.className = 'dose-icon';
-        if (dose.photo) {
-          const img = document.createElement('img');
-          img.src = dose.photo;
-          img.alt = `Foto da caixa de ${dose.name}`;
-          icon.appendChild(img);
-        } else {
-          icon.setAttribute('aria-hidden', 'true');
-          icon.textContent = FORM_ICONS[dose.form] || '💊';
-        }
+      const item = document.createElement('li');
+      item.className = 'tl-item tl-' + state;
 
-        const info = document.createElement('div');
+      const time = document.createElement('span');
+      time.className = 'tl-time';
+      time.textContent = dose.time;
 
-        const name = document.createElement('p');
-        name.className = 'dose-name';
-        name.textContent = dose.name;
+      const dot = document.createElement('span');
+      dot.className = 'tl-dot';
+      dot.setAttribute('aria-hidden', 'true');
+      dot.textContent = state === 'taken' ? '✓' : (state === 'late' ? '!' : '');
 
-        const meta = document.createElement('p');
-        meta.className = 'dose-meta';
-        const formName = FORM_NAMES[dose.form];
-        meta.textContent = `Horário: ${dose.time}` + (formName ? ` · ${formName}` : '');
+      const body = document.createElement('div');
+      body.className = 'tl-body';
 
-        const s = STATUS_LABEL[dose.status] || STATUS_LABEL.pending;
-        const badge = document.createElement('span');
-        badge.className = 'status ' + (dose.status || 'pending');
-        badge.textContent = `${s.icon} ${s.text}`;
+      const name = document.createElement('p');
+      name.className = 'tl-name';
+      name.textContent = dose.name;
 
-        info.append(name, meta, badge);
+      const meta = document.createElement('p');
+      meta.className = 'tl-meta';
+      const formName = FORM_NAMES[dose.form];
+      meta.textContent = STATE_TEXT[state] + (formName ? ` · ${formName}` : '');
 
-        if (!isDemo && dose.status !== 'taken') {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'action-btn small-btn dose-take';
-          btn.textContent = 'Marcar como tomado';
-          btn.setAttribute('aria-label', `Marcar ${dose.name} das ${dose.time} como tomado`);
-          btn.addEventListener('click', () => {
-            const map = loadStatus();
-            map[dose.key] = 'taken';
-            saveStatus(map);
-            renderHome();
-            showToast('Dose registrada');
-          });
-          info.appendChild(btn);
-        }
-
-        item.append(icon, info);
-        list.appendChild(item);
-      });
+      body.append(name, meta);
+      item.append(time, dot, body);
+      list.appendChild(item);
+    });
   }
 
   function renderHome() {
     const meds = loadMedicines();
     const isDemo = meds.length === 0;
     $('demo-note').hidden = !isDemo;
-    $('empty').hidden = true;
+    $('demo-cta').hidden = !isDemo;
 
-    const doses = isDemo ? DEMO_DOSES.map(d => ({ ...d })) : buildDoses(meds);
-    renderSummary(doses);
-    renderDoses(doses, isDemo);
+    const doses = sortedDoses(isDemo ? DEMO_DOSES.map(d => ({ ...d })) : buildDoses(meds));
+    const total = doses.length;
+    const taken = doses.filter(d => d.status === 'taken').length;
+    const next = doses.find(d => d.status !== 'taken') || null;
+
+    renderHero(next, taken, total);
+    renderTimeline(doses, next);
+
+    $('tomei-btn').hidden = isDemo || !next;
+    $('timeline-empty').hidden = total > 0;
   }
+
+  $('tomei-btn').addEventListener('click', takeNext);
+  $('confirm-undo').addEventListener('click', undoLast);
+  $('demo-cta').addEventListener('click', () => showView('add'));
+
+  // ===== Cuidador: resumo de adesão dos últimos 7 dias (sem detalhes do paciente) =====
+  const WEEK_DAYS = 7;
+  const CARE_STATE_TEXT = { ok: 'tudo tomado', partial: 'parcial', miss: 'dose perdida', none: 'sem dose' };
+  let careSummary = '';
+
+  // Doses que deveriam ter sido tomadas em um dia. Hoje, só as dos horários já passados.
+  function dosesDueOn(meds, dayKey, isToday, status) {
+    const out = [];
+    meds.forEach(med => {
+      if (dayKey < keyOf(new Date(med.id))) return; // não cobra dias anteriores ao cadastro
+      (med.times || []).forEach(time => {
+        if (isToday && minutesOf(time) > nowMinutes()) return;
+        const key = `${dayKey}|${med.id}|${time}`;
+        out.push({ key: key, medId: med.id, name: med.name, time: time, taken: status[key] === 'taken' });
+      });
+    });
+    return out;
+  }
+
+  function dayState(due, taken, isToday) {
+    if (!due) return 'none';
+    if (taken === due) return 'ok';
+    if (taken > 0 || isToday) return 'partial';
+    return 'miss';
+  }
+
+  function renderCare() {
+    const meds = loadMedicines();
+    const empty = meds.length === 0;
+    $('care-empty').hidden = !empty;
+    $('care-content').hidden = empty;
+    if (empty) return;
+
+    const status = loadStatus();
+    const week = [];
+    const perMed = {};
+    let due7 = 0;
+    let taken7 = 0;
+
+    for (let offset = WEEK_DAYS - 1; offset >= 0; offset--) {
+      const isToday = offset === 0;
+      const due = dosesDueOn(meds, dayKeyFor(offset), isToday, status);
+      const taken = due.filter(x => x.taken).length;
+      due7 += due.length;
+      taken7 += taken;
+      due.forEach(x => {
+        const m = perMed[x.medId] || (perMed[x.medId] = { name: x.name, due: 0, taken: 0 });
+        m.due += 1;
+        if (x.taken) m.taken += 1;
+      });
+      const when = new Date();
+      when.setDate(when.getDate() - offset);
+      const label = when.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').slice(0, 3);
+      week.push({ label: label, state: dayState(due.length, taken, isToday), isToday: isToday });
+    }
+
+    const todayDue = dosesDueOn(meds, todayKey(), true, status);
+    const todayTaken = todayDue.filter(x => x.taken).length;
+    const todayLate = buildDoses(meds).filter(d => d.status === 'late');
+    const next = nextPending(buildDoses(meds));
+    const rate = due7 ? Math.round((taken7 / due7) * 100) : null;
+    const rows = Object.values(perMed);
+
+    // Cabeçalho
+    let statusText;
+    if (todayLate.length) statusText = 'Atenção';
+    else if (!todayDue.length) statusText = 'Sem doses ainda';
+    else if (todayTaken === todayDue.length) statusText = 'Tudo em dia';
+    else statusText = 'Em andamento';
+    $('care-status').textContent = statusText;
+    $('care-sub').textContent = todayDue.length
+      ? `${todayTaken} de ${todayDue.length} doses de hoje`
+      : 'Nenhuma dose até agora';
+    setRing($('care-ring'), rate || 0);
+    $('care-ring-text').textContent = rate === null ? '–' : `${rate}%`;
+    $('care-today').textContent = next
+      ? `Próxima dose: ${next.name}, às ${next.time}.`
+      : 'Todas as doses de hoje foram confirmadas.';
+
+    // Alerta de dose atrasada (sem confirmação depois de 1 hora)
+    const alertBox = $('care-alert');
+    if (todayLate.length) {
+      const names = todayLate.map(d => `${d.name} (${d.time})`).join(', ');
+      alertBox.textContent = `⚠️ Não confirmado: ${names}. Vale verificar com o paciente.`;
+      alertBox.hidden = false;
+    } else {
+      alertBox.textContent = '';
+      alertBox.hidden = true;
+    }
+
+    // Semana
+    const weekBox = $('care-week');
+    weekBox.innerHTML = '';
+    week.forEach(day => {
+      const li = document.createElement('li');
+      li.className = 'wd' + (day.isToday ? ' is-today' : '');
+
+      const name = document.createElement('span');
+      name.className = 'wd-name';
+      name.textContent = day.label;
+
+      const dot = document.createElement('span');
+      dot.className = 'wd-dot ' + day.state;
+      dot.setAttribute('aria-hidden', 'true');
+      dot.textContent = day.state === 'ok' ? '✓' : (day.state === 'miss' ? '✕' : '');
+
+      const sr = document.createElement('span');
+      sr.className = 'visually-hidden';
+      sr.textContent = `${day.label}: ${CARE_STATE_TEXT[day.state]}`;
+
+      li.append(name, dot, sr);
+      weekBox.appendChild(li);
+    });
+
+    // Adesão por remédio
+    const medsBox = $('care-meds');
+    medsBox.innerHTML = '';
+    if (!rows.length) {
+      const empty2 = document.createElement('li');
+      empty2.className = 'hint';
+      empty2.textContent = 'Nenhuma dose registrada na última semana.';
+      medsBox.appendChild(empty2);
+    }
+    rows.forEach(m => {
+      const pct = m.due ? Math.round((m.taken / m.due) * 100) : 0;
+
+      const li = document.createElement('li');
+      li.className = 'rate-row';
+
+      const top = document.createElement('div');
+      top.className = 'rate-top';
+      const nm = document.createElement('span');
+      nm.textContent = m.name;
+      const val = document.createElement('strong');
+      val.textContent = `${pct}%`;
+      top.append(nm, val);
+
+      const bar = document.createElement('div');
+      bar.className = 'rate-bar';
+      bar.setAttribute('role', 'progressbar');
+      bar.setAttribute('aria-valuemin', '0');
+      bar.setAttribute('aria-valuemax', '100');
+      bar.setAttribute('aria-valuenow', String(pct));
+      bar.setAttribute('aria-label', `Adesão de ${m.name}`);
+      const fill = document.createElement('span');
+      fill.style.width = pct + '%';
+      bar.appendChild(fill);
+
+      li.append(top, bar);
+      medsBox.appendChild(li);
+    });
+
+    careSummary = [
+      'Resumo do Remédio Certo (últimos 7 dias)',
+      `Adesão: ${rate === null ? 'sem doses no período' : rate + '%'}`,
+      `Hoje: ${todayTaken} de ${todayDue.length} doses tomadas.`
+    ].concat(rows.map(m => `- ${m.name}: ${m.due ? Math.round((m.taken / m.due) * 100) : 0}%`)).join('\n');
+  }
+
+  async function shareCare() {
+    const text = careSummary || 'Sem remédios cadastrados.';
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Remédio Certo: resumo', text: text });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return; // o usuário cancelou
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Resumo copiado');
+    } catch (e) {
+      showToast('Não foi possível compartilhar neste aparelho');
+    }
+  }
+
+  $('care-share').addEventListener('click', shareCare);
+  $('care-home').addEventListener('click', () => showView('home'));
 
   // ===== Cadastro: nome com autocomplete =====
   const nameInput = $('med-name');
@@ -567,6 +860,7 @@
     $('view-add').hidden = name !== 'add';
     $('view-bula').hidden = name !== 'bula';
     $('view-chat').hidden = name !== 'chat';
+    $('view-care').hidden = name !== 'care';
 
     document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
       const active = btn.dataset.view === name;
@@ -583,6 +877,9 @@
     } else if (name === 'chat') {
       chatStart();
       $('chat-title').focus();
+    } else if (name === 'care') {
+      renderCare();
+      $('care-title').focus();
     } else {
       renderHome();
     }
@@ -626,7 +923,6 @@
     btn.addEventListener('click', () => showView(btn.dataset.view));
   });
 
-  $('go-add-empty').addEventListener('click', () => showView('add'));
 
   // ===== Service worker (funciona offline depois da primeira visita) =====
   function registerServiceWorker() {
@@ -725,14 +1021,17 @@
   }
 
   function takeFromAlert() {
-    if (currentAlertKey && !isDemoKey(currentAlertKey)) {
-      const map = loadStatus();
-      map[currentAlertKey] = 'taken';
-      saveStatus(map);
-    }
+    const key = currentAlertKey;
     hideAlert();
-    renderHome();
-    showToast('Dose registrada');
+    if (key && !isDemoKey(key)) {
+      const prev = loadStatus()[key];
+      markStatus(key, 'taken');
+      renderHome();
+      showConfirm(key, prev);
+    } else {
+      renderHome();
+      showToast('Dose registrada');
+    }
   }
 
   function checkAlerts() {
@@ -812,7 +1111,10 @@
   });
 
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) checkAlerts();
+    if (!document.hidden) {
+      checkAlerts();
+      if (!$('view-home').hidden) renderHome();
+    }
   });
 
   // ===== Chatbot: respostas fixas, só sobre os remédios cadastrados =====
@@ -1085,7 +1387,10 @@
     renderHome();
     registerServiceWorker();
     checkAlerts();
-    setInterval(checkAlerts, CHECK_EVERY_MS);
+    setInterval(() => {
+      checkAlerts();
+      if (!$('view-home').hidden) renderHome();
+    }, CHECK_EVERY_MS);
   }
 
   document.addEventListener('DOMContentLoaded', init);

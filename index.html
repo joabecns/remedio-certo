@@ -14,36 +14,49 @@
 <body>
   <div class="app">
     <header class="topbar">
-      <div class="brand">
-        <img src="icons/icon.svg" alt="" width="40" height="40">
+      <img class="brand-logo" src="icons/icon.svg" alt="" width="48" height="48">
+      <div class="brand-text">
         <h1>Remédio Certo</h1>
+        <p class="date" id="today-date"></p>
       </div>
-      <button id="btn-theme" class="icon-btn" type="button" aria-label="Ativar modo escuro" aria-pressed="false">
+      <button id="btn-theme" class="round-btn" type="button" aria-label="Ativar modo escuro" aria-pressed="false">
         <span aria-hidden="true" id="theme-icon">🌙</span>
       </button>
     </header>
 
-    <!-- ===== Tela: Início ===== -->
+    <!-- ===== Tela: Início (próxima dose, botão Tomei e linha do tempo) ===== -->
     <main id="view-home">
-      <section class="summary" aria-live="polite">
-        <p class="date" id="today-date"></p>
-        <p class="progress-text" id="progress-text"></p>
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Doses confirmadas hoje">
-          <div class="progress-bar" id="progress-bar"></div>
+      <div class="demo-note" id="demo-note" hidden>
+        <p>Exemplo: cadastre seu primeiro remédio para usar o app de verdade.</p>
+        <button class="link-btn" id="demo-alert" type="button">Ver exemplo do alerta</button>
+      </div>
+
+      <section class="hero" aria-labelledby="hero-name">
+        <div class="hero-top">
+          <div class="hero-avatar" id="hero-icon" aria-hidden="true">💊</div>
+          <div class="hero-info">
+            <p class="eyebrow" id="hero-eyebrow">Próxima dose</p>
+            <h2 class="hero-name" id="hero-name">—</h2>
+            <p class="hero-time"><span id="hero-time"></span> <span class="hero-when" id="hero-when"></span></p>
+          </div>
+          <div class="ring" aria-hidden="true">
+            <svg viewBox="0 0 120 120">
+              <circle class="ring-track" cx="60" cy="60" r="50"></circle>
+              <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="50"></circle>
+            </svg>
+            <div class="ring-text"><strong id="ring-text">0/0</strong><span>tomadas</span></div>
+          </div>
         </div>
+        <p class="hero-after" id="hero-after"></p>
       </section>
 
-      <section aria-labelledby="doses-title">
-        <h2 id="doses-title">Remédios de hoje</h2>
-        <div class="demo-note" id="demo-note" hidden>
-          <p>Exemplo: cadastre seu primeiro remédio na aba Adicionar.</p>
-          <button class="link-btn" id="demo-alert" type="button">Ver exemplo do alerta</button>
-        </div>
-        <ul class="dose-list" id="dose-list"></ul>
-        <div class="empty" id="empty" hidden>
-          <p>Nenhum remédio cadastrado ainda.</p>
-          <button class="action-btn link-btn" id="go-add-empty" type="button">Adicionar remédio</button>
-        </div>
+      <button class="tomei-btn" id="tomei-btn" type="button">✅ Tomei</button>
+      <button class="action-btn demo-cta" id="demo-cta" type="button" hidden>➕ Cadastrar meu primeiro remédio</button>
+
+      <section class="card" aria-labelledby="timeline-title">
+        <h2 class="section-title" id="timeline-title">Linha do tempo de hoje</h2>
+        <ol class="timeline" id="timeline"></ol>
+        <div class="empty" id="timeline-empty" hidden><p>Nenhum remédio cadastrado ainda.</p></div>
       </section>
     </main>
 
@@ -55,10 +68,10 @@
       <ul class="bula-list" id="bula-list"></ul>
     </main>
 
-    <!-- ===== Tela: Chatbot (respostas fixas, só sobre os remédios cadastrados) ===== -->
+    <!-- ===== Tela: Assistente (respostas fixas ou IA, só sobre os remédios cadastrados) ===== -->
     <main id="view-chat" hidden>
       <h2 class="view-title" tabindex="-1" id="chat-title">Assistente</h2>
-      <p class="chat-disclaimer">Respostas fixas e simples. Não substituem o médico nem o farmacêutico, e só falam sobre os remédios que você cadastrou.</p>
+      <p class="chat-disclaimer">Não substitui o médico nem o farmacêutico, e só fala sobre os remédios que você cadastrou.</p>
       <div class="chat-log" id="chat-log" role="log" aria-live="polite" aria-label="Conversa com o assistente"></div>
       <div class="chat-chips" id="chat-chips"></div>
       <form class="chat-form" id="chat-form">
@@ -66,6 +79,64 @@
         <input id="chat-input" type="text" autocomplete="off" placeholder="Ex.: como devo tomar?" maxlength="200">
         <button class="action-btn small-btn" type="submit">Enviar</button>
       </form>
+    </main>
+
+    <!-- ===== Tela: Cuidador (resumo de adesão, sem detalhes do paciente) ===== -->
+    <main id="view-care" hidden>
+      <h2 class="view-title" tabindex="-1" id="care-title">Cuidador</h2>
+      <p class="care-intro">Resumo rápido da adesão. Não é preciso abrir os detalhes do paciente.</p>
+
+      <div class="empty" id="care-empty" hidden><p>Cadastre remédios para ver o resumo de adesão.</p></div>
+
+      <div id="care-content">
+        <section class="hero">
+          <div class="hero-top">
+            <div class="hero-avatar" aria-hidden="true">🧓</div>
+            <div class="hero-info">
+              <p class="eyebrow">Adesão · 7 dias</p>
+              <h2 class="hero-name" id="care-status">—</h2>
+              <p class="hero-time" id="care-sub"></p>
+            </div>
+            <div class="ring" aria-hidden="true">
+              <svg viewBox="0 0 120 120">
+                <circle class="ring-track" cx="60" cy="60" r="50"></circle>
+                <circle class="ring-fill" id="care-ring" cx="60" cy="60" r="50"></circle>
+              </svg>
+              <div class="ring-text"><strong id="care-ring-text">–</strong><span>adesão</span></div>
+            </div>
+          </div>
+          <p class="hero-after" id="care-today"></p>
+        </section>
+
+        <div class="care-alert" id="care-alert" role="status" hidden></div>
+
+        <section class="card">
+          <h2 class="section-title">Esta semana</h2>
+          <ol class="week" id="care-week"></ol>
+          <p class="legend">
+            <span><i class="dot ok"></i>Tudo tomado</span>
+            <span><i class="dot partial"></i>Parcial</span>
+            <span><i class="dot miss"></i>Perdida</span>
+            <span><i class="dot none"></i>Sem dose</span>
+          </p>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Adesão por remédio</h2>
+          <ul class="rates" id="care-meds"></ul>
+        </section>
+
+        <section class="quick">
+          <button class="quick-card" id="care-share" type="button">
+            <span class="quick-icon" aria-hidden="true">📤</span><span>Compartilhar resumo</span>
+          </button>
+          <button class="quick-card" id="care-home" type="button">
+            <span class="quick-icon" aria-hidden="true">💊</span><span>Ver remédios de hoje</span>
+          </button>
+        </section>
+
+        <p class="footnote">Os dados ficam neste aparelho. Para o cuidador acompanhar pelo próprio celular, será preciso um servidor (próxima etapa).</p>
+      </div>
     </main>
 
     <!-- ===== Tela: Adicionar remédio ===== -->
@@ -141,6 +212,15 @@
       </form>
     </main>
 
+    <!-- Confirmação imediata do registro de dose -->
+    <div class="confirm" id="confirm" role="status" aria-live="assertive" hidden>
+      <div class="confirm-text">
+        <strong>✅ Dose registrada</strong>
+        <span id="confirm-detail"></span>
+      </div>
+      <button class="confirm-undo" id="confirm-undo" type="button">Desfazer</button>
+    </div>
+
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <!-- ===== Alerta de dose ===== -->
@@ -167,7 +247,10 @@
         <span aria-hidden="true">📖</span><span>Bulário</span>
       </button>
       <button class="nav-btn" type="button" data-view="chat">
-        <span aria-hidden="true">💬</span><span>Chatbot</span>
+        <span aria-hidden="true">💬</span><span>Assistente</span>
+      </button>
+      <button class="nav-btn" type="button" data-view="care">
+        <span aria-hidden="true">👥</span><span>Cuidador</span>
       </button>
     </nav>
   </div>
