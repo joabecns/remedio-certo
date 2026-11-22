@@ -958,7 +958,8 @@
       renderBula();
       $('bula-title').focus();
     } else if (name === 'chat') {
-      chatStart();
+      // Mantém a conversa ao sair e voltar para a aba; só inicia se ainda não houver mensagens.
+      if (!$('chat-log').children.length) chatStart();
       $('chat-title').focus();
     } else if (name === 'care') {
       renderCare();
