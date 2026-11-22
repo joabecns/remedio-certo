@@ -719,7 +719,7 @@ h2 {
   min-width: 0;
 }
 
-.field label,
+.field > label,
 .field legend,
 .field-label {
   display: block;
@@ -894,6 +894,64 @@ input[type="time"] {
 }
 
 .form-actions .action-btn { width: 100%; }
+
+/* ===== Meus remédios (remover / substituir) ===== */
+.replace-note {
+  background: var(--surface);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.my-meds .hint { margin: 0 0 12px; }
+
+.my-med-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.my-med {
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  background: var(--bg);
+}
+
+.my-med-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.my-med-meta {
+  margin: 2px 0 12px;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.my-med-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.my-med-actions .action-btn {
+  width: 100%;
+  padding: 0 10px;
+  font-size: 16px;
+}
+
+.action-btn.danger {
+  background: var(--late);
+  color: var(--on-late);
+}
 
 /* ===== Tela: Bulário ===== */
 .bula-intro,

@@ -142,6 +142,7 @@
     <!-- ===== Tela: Adicionar remédio ===== -->
     <main id="view-add" hidden>
       <h2 class="view-title" tabindex="-1" id="add-title">Adicionar remédio</h2>
+      <p class="replace-note" id="replace-note" hidden></p>
 
       <form id="med-form" novalidate>
         <!-- Nome com autocomplete -->
@@ -210,6 +211,12 @@
           <button class="action-btn ghost" id="cancel-add" type="button">Cancelar</button>
         </div>
       </form>
+
+      <section class="card my-meds" aria-labelledby="my-meds-title">
+        <h2 class="section-title" id="my-meds-title">Meus remédios</h2>
+        <p class="hint">Remova um remédio que não usa mais ou substitua por outro.</p>
+        <ul class="my-med-list" id="my-meds"></ul>
+      </section>
     </main>
 
     <!-- Confirmação imediata do registro de dose -->

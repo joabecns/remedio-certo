@@ -784,7 +784,11 @@
   }
 
   // ===== Cadastro: salvar e cancelar =====
+  let replacingId = null; // id do remédio que está sendo substituído
+
   function resetForm() {
+    replacingId = null;
+    $('replace-note').hidden = true;
     nameInput.value = '';
     closeSuggestions();
     times = ['08:00'];
@@ -830,7 +834,9 @@
       photo: photoData
     };
 
-    const list = loadMedicines();
+    const replacing = replacingId;
+    const old = replacing ? loadMedicines().find(m => m.id === replacing) : null;
+    const list = loadMedicines().filter(m => m.id !== replacing);
     list.push(med);
 
     if (!saveMedicines(list)) {
@@ -845,14 +851,90 @@
 
     resetForm();
     showView('home');
-    showToast(`${name} salvo`);
-    checkAlerts();
+    checkAlerts(); // antes do aviso de salvamento, para ele não ser substituído
+    showToast(old ? `${name} salvo no lugar de ${old.name}` : `${name} salvo`);
   });
 
   $('cancel-add').addEventListener('click', () => {
     resetForm();
     showView('home');
   });
+
+  // ===== Meus remédios: remover ou substituir =====
+  function renderMyMeds() {
+    const box = $('my-meds');
+    box.innerHTML = '';
+    const meds = loadMedicines();
+
+    if (!meds.length) {
+      const empty = document.createElement('li');
+      empty.className = 'hint';
+      empty.textContent = 'Nenhum remédio cadastrado.';
+      box.appendChild(empty);
+      return;
+    }
+
+    meds.forEach(med => {
+      const li = document.createElement('li');
+      li.className = 'my-med';
+
+      const info = document.createElement('div');
+      const name = document.createElement('p');
+      name.className = 'my-med-name';
+      name.textContent = med.name;
+      const meta = document.createElement('p');
+      meta.className = 'my-med-meta';
+      const formName = FORM_NAMES[med.form];
+      meta.textContent = (formName ? formName + ' · ' : '') + 'Horários: ' + (med.times || []).join(', ');
+      info.append(name, meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'my-med-actions';
+
+      const replaceBtn = document.createElement('button');
+      replaceBtn.type = 'button';
+      replaceBtn.className = 'action-btn secondary small-btn';
+      replaceBtn.textContent = 'Substituir';
+      replaceBtn.setAttribute('aria-label', `Substituir ${med.name}`);
+      replaceBtn.addEventListener('click', () => startReplace(med.id));
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'action-btn danger small-btn';
+      removeBtn.textContent = 'Remover';
+      removeBtn.setAttribute('aria-label', `Remover ${med.name}`);
+      removeBtn.addEventListener('click', () => removeMed(med.id));
+
+      actions.append(replaceBtn, removeBtn);
+      li.append(info, actions);
+      box.appendChild(li);
+    });
+  }
+
+  function startReplace(id) {
+    const med = loadMedicines().find(m => m.id === id);
+    if (!med) return;
+    replacingId = id;
+    const note = $('replace-note');
+    note.textContent = `Substituindo ${med.name}. Ao salvar o novo remédio, ${med.name} será removido.`;
+    note.hidden = false;
+    showView('add');
+  }
+
+  function removeMed(id) {
+    const med = loadMedicines().find(m => m.id === id);
+    if (!med) return;
+    if (!window.confirm(`Remover ${med.name}? Ele deixará de aparecer nos lembretes e na linha do tempo.`)) return;
+
+    if (!saveMedicines(loadMedicines().filter(m => m.id !== id))) {
+      showToast('Não foi possível remover neste navegador');
+      return;
+    }
+    if (replacingId === id) resetForm();
+    if (chatMedId === id) chatMedId = null;
+    renderMyMeds();
+    showToast(`${med.name} removido`);
+  }
 
   // ===== Navegação =====
   function showView(name) {
@@ -870,6 +952,7 @@
     });
 
     if (name === 'add') {
+      renderMyMeds();
       $('add-title').focus();
     } else if (name === 'bula') {
       renderBula();
